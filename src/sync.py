@@ -95,5 +95,9 @@ def closeTask(taskId):
 def getData():
     home = os.getenv("HOME")
     with open(home+"/.todoist.json", "r") as f:
-        data = json.load(f)
+        try:
+            data = json.load(f)
+        except:
+            sync()
+            data = getData()
     return data
