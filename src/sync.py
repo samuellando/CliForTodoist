@@ -27,7 +27,7 @@ def cache(string):
 
 def addTask(content, projectId, dueString):
     home = os.getenv("HOME")
-    tempId = ''.join(
+    """tempId = ''.join(
         random.choice('qwertyuiopasdfghjklzxcvbnm1234567890') for _ in range(10))
     with open(home+"/.todoistCache", "a") as f:
         f.write("\nadd////{}////{}////{}////{}".format(content, str(projectId), dueString, tempId))
@@ -53,7 +53,10 @@ def addTask(content, projectId, dueString):
         })
     data["ids"].append(tempId)
     with open(home+"/.todoist.json", "w") as f:
-        json.dump(data, f)
+        json.dump(data, f)"""
+    with open(home+"/.todoistCache", "a") as f:
+        f.write("\nadd////{}////{}////{}".format(content, str(projectId), dueString))
+    sync()
 
 def closeTask(taskId):
     home = os.getenv("HOME")

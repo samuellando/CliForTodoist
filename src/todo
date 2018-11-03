@@ -22,7 +22,10 @@ def dateTag(dateString):
     return "{}{}\033[00m".format(color, dateString)
 
 def run():
-    projects, tasks, ids = todoistRequests.getData()
+    data = sync.getData()
+    projects = data["projects"]
+    tasks = data["tasks"]
+    ids = data["ids"]
     # If not input is added, assume show.
     if (len(sys.argv) == 0):
         sys.argv.append("show")
@@ -31,28 +34,30 @@ def run():
         if ("-p" in sys.argv):
             project = ids[int(sys.argv[sys.argv.index("-p")+1])]
         else:
-            project = 0
+            project = projects[0]["id"]
         if ("-d" in sys.argv):
             date = sys.argv[sys.argv.index("-d")+1]
         else:
-            date = "Tomorrow"
-        todoistRequests.addTask(sys.argv[1], project, date)
+            date = (datetime.date.today() + datetime.timedelta(days=1)).strftime("%Y-%m-%d")
+        sync.addTask(sys.argv[1], project, date)
 
     elif sys.argv[0] == "done":
         del sys.argv[0]
         for id in sys.argv:
-            todoistRequests.closeTask(ids[int(id)])
+            sync.closeTask(ids[int(id)])
 
-    elif "show" in sys.argv:
+    elif sys.argv[0] == "show":
         i=0
         for project in projects:
             print(u"({:<3}) \033[4;1m{}\033[00m".format(i, project["name"]))
             i += 1
             for task in tasks:
                 if (task["project_id"] == project["id"]):
-                    print(u"({:<3})\t{} - {}".format(i, dateTag(task["date"]), 
+                    print(u"({:<3})\t{} - {}".format(i, dateTag(task["due"]["date"]), 
                                                         task["content"]))
                     i += 1
+    elif sys.argv[0] == "sync":
+        sync.sync()
     else:
         print("Input not recognized")
 
