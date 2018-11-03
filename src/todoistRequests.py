@@ -1,11 +1,12 @@
-import requests, time
+import requests, time, os, json, uuid
 
 def genArgs(urlPath, data=None, headers=None):
     """
     THis method generates the arguments for any required request.
     """
-    with open("~/.todoistApiToken", "r") as f:
-        TOKEN = f.readline()
+    home = os.getenv("HOME")
+    with open(home+"/.todoistApiToken", "r") as f:
+        TOKEN = f.readline().replace("\n", "")
 
     args =  {"url":"https://beta.todoist.com/API/v8/"+urlPath, 
             "headers":{"Authorization": "Bearer %s" % TOKEN}}
@@ -46,11 +47,7 @@ def getData():
 
     tasks = doRequest(10, 200, requests.get, 
                 genArgs("tasks")).json()
-    # Add date data to tasks.
-    for task in tasks:
-            task["date"] = doRequest(10, 200, requests.get, 
-                            genArgs("tasks/"+str(task["id"]))
-                                        ).json()["due"]["date"] # Extract date.
+                
     # Simplify the ids.
     ids = []
     for project in projects:
@@ -71,6 +68,6 @@ def addTask(content, projectId, dueString):
                             headers = {"Content-Type": "application/json",
                                         "X-Request-Id": str(uuid.uuid4())}))
 
-def closeTask(taskId, token):
+def closeTask(taskId):
     doRequest(10, 204, requests.post, 
                         genArgs("tasks/%s/close" % taskId))
