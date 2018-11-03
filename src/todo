@@ -1,0 +1,132 @@
+#!/usr/bin/python3
+
+import uuid, requests, json, sys, time, datetime
+
+def dateTag(dateString):
+    DAY_LENGTH = 86400
+    WEEK_LENGTH = 604800
+    date = int(time.mktime(time.strptime(dateString, "%Y-%m-%d")))
+    todayDate = datetime.datetime.today().strftime("%Y-%m-%d")
+    today =  int(time.mktime(time.strptime(todayDate, "%Y-%m-%d")))
+    diff = date-today
+    if (diff < 0): # Overdue
+        color = "\033[31m" # Red
+    elif (diff >= 0 and diff < DAY_LENGTH): # Due today
+        return "\033[31mTODAY\033[00m" # Red
+    elif (diff >= DAY_LENGTH and diff < 2*DAY_LENGTH): # Due tomorrow
+        return "\033[33mTOMORROW\033[00m" # Yellow
+    elif (diff <= WEEK_LENGTH): # Due this week
+        color = "\033[32m" # Green
+    else:
+        color = "\033[00m" # Normal
+    return "{}{}\033[00m".format(color, dateString)
+
+def run():
+    projects, tasks, ids = todoistRequests.getData()
+    # If not input is added, assume show.
+    if (len(sys.argv) == 0):
+        sys.argv.append("show")
+
+    if sys.argv[0] == "add":
+        if ("-p" in sys.argv):
+            project = ids[int(sys.argv[sys.argv.index("-p")+1])]
+        else:
+            project = 0
+        if ("-d" in sys.argv):
+            date = sys.argv[sys.argv.index("-d")+1]
+        else:
+            date = "Tomorrow"
+        todoistRequests.addTask(sys.argv[1], project, date)
+
+    elif sys.argv[0] == "done":
+        del sys.argv[0]
+        for id in sys.argv:
+            todoistRequests.closeTask(ids[int(id)])
+
+    elif "show" in sys.argv:
+        i=0
+        for project in projects:
+            print(u"({:<3}) \033[4;1m{}\033[00m".format(i, project["name"]))
+            i += 1
+            for task in tasks:
+                if (task["project_id"] == project["id"]):
+                    print(u"({:<3})\t{} - {}".format(i, dateTag(task["date"]), 
+                                                        task["content"]))
+                    i += 1
+    else:
+        print("Input not recognized")
+
+class todoistRequests:
+    TOKEN = "YOURTOKEN"
+    
+    def genArgs(urlPath, data=None, headers=None):
+        args =  {"url":"https://beta.todoist.com/API/v8/"+urlPath, 
+               "headers":{"Authorization": "Bearer %s" % todoistRequests.TOKEN}}
+        
+        if data:
+            args["data"] = data
+        
+        if headers:
+            args["headers"] = {**args["headers"], **headers}
+        
+        return args
+
+    def doRequest(tries, code, f, args):
+        """
+            Higher order function that runs f as a request tries times until 
+            code is returned. args is the function arguments in dictionary form.
+        """
+        statusCode = 404 # Default status code, will change depending on return.
+        i = 1 # Start at try 1.
+        while (i <= tries and statusCode != code):
+            # Run the function with args.
+            response = f(**args)
+            # Extract the status code.
+            statusCode = response.status_code 
+            i += 1
+        if (i > tries):
+            # Show error message and exit.
+            print("Failed to connect to todoist!")
+            exit()
+        else:
+            # If all is good, return the responce.
+            return response 
+
+    def getData():
+        projects = todoistRequests.doRequest(10, 200, requests.get, 
+                    todoistRequests.genArgs("projects")).json()
+
+        tasks = todoistRequests.doRequest(10, 200, requests.get, 
+                    todoistRequests.genArgs("tasks")).json()
+        # Add date data to tasks.
+        for task in tasks:
+                task["date"] = todoistRequests.doRequest(10, 200, requests.get, 
+                               todoistRequests.genArgs("tasks/"+str(task["id"]))
+                                         ).json()["due"]["date"] # Extract date.
+        # Simplify the ids.
+        ids = []
+        for project in projects:
+            ids.append(project["id"])
+            for task in tasks:
+                if (task["project_id"] == project["id"]):
+                    ids.append(task["id"])
+        
+        return projects, tasks, ids
+
+    def addTask(content, projectId, dueString):
+        todoistRequests.doRequest(10, 200, requests.post, 
+                            todoistRequests.genArgs("tasks", data = json.dumps(
+                                                        {"content": content,
+                                                        "project_id": projectId, 
+                                                        "due_string": dueString}
+                                                        ), 
+                                headers = {"Content-Type": "application/json",
+                                            "X-Request-Id": str(uuid.uuid4())}))
+
+    def closeTask(taskId):
+        todoistRequests.doRequest(10, 204, requests.post, 
+                            todoistRequests.genArgs("tasks/%s/close" % taskId))
+
+if __name__ == "__main__":
+    del sys.argv[0] # First argument is always the program name.
+    run()
