@@ -32,7 +32,7 @@ def run():
 
     if sys.argv[0] == "add":
         if ("-p" in sys.argv):
-            project = ids[int(sys.argv[sys.argv.index("-p")+1])]
+            project = ids[int(sys.argv[sys.argv.index("-p")+1])]["id"]
         else:
             project = projects[0]["id"]
         if ("-d" in sys.argv):
