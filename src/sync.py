@@ -16,10 +16,23 @@ def sync():
     open(home+"/.todoistCache", "w").close()
     
     with open(home+"/.todoist.json", "w") as f:
-        projects, tasks, ids = todoistRequests.getData()
-        data = {"projects": projects, "tasks": tasks, "ids": ids}
+        projects, tasks = todoistRequests.getData()
+        data = structure(projects, tasks)
         json.dump(data, f)
 
+def structure(projects, tasks):
+    data = {}
+    data["projects"] = projects
+    data["tasks"] = tasks
+    ids = []
+    for project in projects:
+        ids.append(project)
+        for task in tasks:
+            if task["project_id"] == project["id"]:
+                ids.append(task)
+    data["ids"] = ids
+    return data
+        
 def cache(string):
     home = os.getenv("HOME")
     with open(home+"/.todoistCache", "a") as f:
@@ -27,13 +40,12 @@ def cache(string):
 
 def addTask(content, projectId, dueString):
     home = os.getenv("HOME")
-    """tempId = ''.join(
+    tempId = ''.join(
         random.choice('qwertyuiopasdfghjklzxcvbnm1234567890') for _ in range(10))
-    with open(home+"/.todoistCache", "a") as f:
-        f.write("\nadd////{}////{}////{}////{}".format(content, str(projectId), dueString, tempId))
+    cache("add////{}////{}////{}////{}".format(content, str(projectId), dueString, tempId))
     with open(home+"/.todoist.json", "r") as f:
         data = json.load(f)
-    data["tasks"].append({
+    task = {
             "id": tempId,
             "project_id": projectId,
             "content": content,
@@ -50,13 +62,11 @@ def addTask(content, projectId, dueString):
             },
             "url": "https://todoist.com/showTask?id=2806531187",
             "date": "2018-10-22"
-        })
-    data["ids"].append(tempId)
+        }
+    data["tasks"].append(task)
+    data = structure(data["projects"], data["tasks"])
     with open(home+"/.todoist.json", "w") as f:
-        json.dump(data, f)"""
-    with open(home+"/.todoistCache", "a") as f:
-        f.write("\nadd////{}////{}////{}".format(content, str(projectId), dueString))
-    sync()
+        json.dump(data, f)
 
 def closeTask(taskId):
     home = os.getenv("HOME")
@@ -73,8 +83,7 @@ def closeTask(taskId):
         with open(home+"/.todoistCache", "w") as f:
             f.write(editedCache)                        
     else:
-        with open(home+"/.todoistCache", "a") as f:
-            f.write("\nclose////"+str(taskId))
+        cache("close////"+str(taskId))
     with open(home+"/.todoist.json", "r") as f:
         data = json.load(f)
     i = 0
@@ -83,12 +92,7 @@ def closeTask(taskId):
             del data["tasks"][i]
             break
         i += 1
-    i = 0
-    for id in data["ids"]:
-        if id == taskId:
-            del data["ids"][i]
-            break
-        i += 1
+    data = structure(data["projects"], data["tasks"])
     with open(home+"/.todoist.json", "w") as f:
         json.dump(data, f)
 

@@ -44,7 +44,7 @@ def run():
     elif sys.argv[0] == "done":
         del sys.argv[0]
         for id in sys.argv:
-            sync.closeTask(ids[int(id)])
+            sync.closeTask(ids[int(id)]["id"])
 
     elif sys.argv[0] == "show":
         i=0

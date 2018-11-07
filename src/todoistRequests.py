@@ -47,16 +47,8 @@ def getData():
 
     tasks = doRequest(10, 200, requests.get, 
                 genArgs("tasks")).json()
-                
-    # Simplify the ids.
-    ids = []
-    for project in projects:
-        ids.append(project["id"])
-        for task in tasks:
-            if (task["project_id"] == project["id"]):
-                ids.append(task["id"])
-    
-    return projects, tasks, ids
+
+    return projects, tasks
 
 def addTask(content, projectId, dueString):
     doRequest(10, 200, requests.post, 
