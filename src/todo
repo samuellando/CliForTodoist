@@ -48,13 +48,14 @@ def run():
 
     elif sys.argv[0] == "show":
         i=0
+        idPadding = len(str(len(ids)-1))
         for project in projects:
-            print(u"({:<3}) \033[4;1m{}\033[00m".format(i, project["name"]))
+            print((u"({:<"+str(idPadding)+"}) \033[4;1m{}\033[00m").format(i, project["name"]))
             i += 1
             for task in tasks:
                 if (task["project_id"] == project["id"]):
-                    print(u"({:<3})\t{} - {}".format(i, dateTag(task["due"]["date"]), 
-                                                        task["content"]))
+                    print((u"({:<"+str(idPadding)+"})\t{} - {}").format(i,
+                        dateTag(task["due"]["date"]), task["content"]))
                     i += 1
     elif sys.argv[0] == "sync":
         sync.sync()
