@@ -16,8 +16,9 @@ def sync():
     open(home+"/.todoistCache", "w").close()
     
     with open(home+"/.todoist.json", "w") as f:
-        projects, tasks = todoistRequests.getData()
+        projects, tasks, labels = todoistRequests.getData()
         data = structure(projects, tasks)
+        data["labels"] = labels
         json.dump(data, f)
 
 def structure(projects, tasks):

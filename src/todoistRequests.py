@@ -47,8 +47,11 @@ def getData():
 
     tasks = doRequest(10, 200, requests.get, 
                 genArgs("tasks")).json()
+    
+    labels = doRequest(10, 200, requests.get, 
+                genArgs("labels")).json()
 
-    return projects, tasks
+    return projects, tasks, labels
 
 def addTask(content, projectId, dueString):
     doRequest(10, 200, requests.post, 
