@@ -1,4 +1,6 @@
 # CliForTodoist
+## Purpose
+This project deals with bring a interface to todoist.com that also works ofline, utilizeing the officially suported API.
 ## Basics
 ```bash
 $ todo [show]
